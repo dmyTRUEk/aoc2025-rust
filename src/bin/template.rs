@@ -8,6 +8,7 @@
 
 use std::fs::{read_to_string as read_file_to_string};
 
+// use itertools::Itertools;
 // use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 
@@ -46,7 +47,7 @@ fn parse_input(input: &str) -> (/*TODO*/) {
 fn example_1() {
 	assert_eq!(
 		todo!("expected answer") as u64,
-		solve_file("./input/dayTODO_partTODO.example")
+		solve_file("./input/dayTODO.example")
 	)
 }
 
