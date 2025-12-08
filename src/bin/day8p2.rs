@@ -2,11 +2,15 @@
 //! $ cargo run --bin dayXpY
 
 #![deny(
-	unused_assignments,
+	//unused_assignments,
 	unused_results,
 )]
 
-use std::{collections::HashSet, fs::read_to_string as read_file_to_string};
+use std::{
+	collections::HashSet,
+	convert::identity,
+	fs::read_to_string as read_file_to_string,
+};
 
 // use itertools::Itertools;
 // use rayon::iter::{IntoParallelIterator, ParallelIterator};
@@ -35,7 +39,7 @@ fn solve_text(text: &str) -> u64 {
 	let mut connected: Vec<HashSet<u16>> = vec![HashSet::new(); boxes_n];
 	let mut connection_i: u32 = 0;
 	let mut last_connection: Option<(u16, u16)> = None;
-	while connected.iter().map(|connections| connections.len()).max().unwrap() < boxes_n {
+	loop {
 		println!("connection_i: {connection_i} {d}", d="-".repeat(10)); connection_i += 1;
 
 		println!("notconnected_dist2s: BEGIN");
@@ -59,30 +63,25 @@ fn solve_text(text: &str) -> u64 {
 		// println!("connected: {connected:?}");
 		last_connection = Some((i, j));
 		println!("notconnected_dist2s: END");
-
-		println!("transitive connections: BEGIN");
-		let mut transitive_connections_n: u32 = 0;
-		loop { // make transitive connections happen!
-			println!("transitive_connections_n: {transitive_connections_n}"); transitive_connections_n += 1;
-			let mut is_changed = false;
-			for i in 0..boxes_n as u16 {
-				for j in connected[i as usize].clone() {
-					if i == j { continue }
-					for k in connected[j as usize].clone() {
-						if !connected[i as usize].contains(&k) {
-							// let true = connected[i as usize].insert(k) else { unreachable!() };
-							let _ = connected[i as usize].insert(k);
-							is_changed = true;
-						}
-					}
-				}
-				// connected[i].sort();
-				// connected[i].dedup();
-			}
-			if !is_changed { break }
-		}
-		println!("transitive connections: END");
 		// println!("connected: {connected:?}");
+
+		fn _is_all_connected(visiting_i: u16, visited: &mut Vec<bool>, connected: &[HashSet<u16>]) {
+			if visited[visiting_i as usize] { return }
+			visited[visiting_i as usize] = true;
+			for i in connected[visiting_i as usize].iter() {
+				_is_all_connected(*i, visited, connected);
+			}
+		}
+
+		fn is_all_connected(connected: &[HashSet<u16>]) -> bool {
+			let mut visited = vec![false; connected.len()];
+			_is_all_connected(0, &mut visited, connected);
+			visited.into_iter().all(identity)
+		}
+
+		println!("is_all_connected: BEGIN");
+		if is_all_connected(&connected) { break }
+		println!("is_all_connected: END");
 	}
 	// println!();
 	println!("connected: {connected:?}");
