@@ -6,7 +6,7 @@
 	unused_results,
 )]
 
-use std::fs::{read_to_string as read_file_to_string};
+use std::fs::read_to_string as read_file_to_string;
 
 // use itertools::Itertools;
 // use rayon::iter::{IntoParallelIterator, ParallelIterator};
