@@ -15,6 +15,8 @@ use std::{
 // use itertools::Itertools;
 // use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
+use aoc2025_rust::utils::VecFromFn;
+
 
 
 fn main() {
@@ -116,19 +118,6 @@ impl Pos {
 		((self.x as i32 - other.x as i32) as i64).pow(2) as u64 +
 		((self.y as i32 - other.y as i32) as i64).pow(2) as u64 +
 		((self.z as i32 - other.z as i32) as i64).pow(2) as u64
-	}
-}
-
-
-
-
-
-trait VecFromFn<T> {
-	fn from_fn<F: FnMut(usize) -> T>(len: usize, f: F) -> Self;
-}
-impl<T> VecFromFn<T> for Vec<T> {
-	fn from_fn<F: FnMut(usize) -> T>(len: usize, f: F) -> Self {
-		(0..len).map(f).collect()
 	}
 }
 

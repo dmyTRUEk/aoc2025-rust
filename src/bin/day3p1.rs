@@ -11,6 +11,8 @@ use std::fs::{read_to_string as read_file_to_string};
 // use itertools::Itertools;
 // use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
+use aoc2025_rust::utils::PositionFirstMax;
+
 
 
 fn main() {
@@ -53,29 +55,6 @@ fn parse_input(input: &str) -> Vec<Vec<u8>> {
 			b - b'0'
 		}).collect()
 	}).collect()
-}
-
-
-
-trait IndexOfMax<T> {
-	fn position_first_max(&self) -> Option<u32>;
-}
-impl<T: PartialOrd> IndexOfMax<T> for &[T] {
-	fn position_first_max(&self) -> Option<u32> {
-		let mut option_index_of_max = None;
-		for i in 0..self.len() as u32 {
-			match option_index_of_max {
-				None => {
-					option_index_of_max = Some(i);
-				}
-				Some(index_of_max) if self[i as usize] > self[index_of_max as usize] => {
-					option_index_of_max = Some(i);
-				}
-				_ => {}
-			}
-		}
-		option_index_of_max
-	}
 }
 
 
