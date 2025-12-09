@@ -54,22 +54,83 @@ fn solve_text(text: &str) -> u64 {
 		}
 		red_or_green_tiles
 	};
+	let x_max_global = red_tiles.iter().map(|t| t.x).max().unwrap();
+	let y_max_global = red_tiles.iter().map(|t| t.y).max().unwrap();
+	let effective_x_max: Vec<u32> = {
+		let mut v = vec![];
+		for y in 0..=y_max_global+1 {
+			dbg!(y);
+			let mut x_max = 0;
+			for x in 0..=x_max_global+1 {
+				if red_or_green_tiles.contains(&TilePos { x, y }) {
+					x_max = x;
+				}
+			}
+			v.push(x_max);
+		}
+		v
+	};
 	let mut max_area: u64 = 0;
 	for i in 0..red_tiles.len() {
 		for j in 0..red_tiles.len() {
+			println!("/{ij_max}:\ti={i}\tj={j}", ij_max=red_tiles.len());
 			if i == j { continue }
 			let area = red_tiles[i].area_with(&red_tiles[j]);
 			if area > max_area {
+				fn is_on_perimeter(tile_pos: &TilePos, perimeter: &HashSet<TilePos>) -> bool {
+					perimeter.contains(tile_pos)
+				}
+				fn is_inside_perimeter(t: TilePos, x_max: u32, perimeter: &HashSet<TilePos>) -> bool {
+					let mut n: u32 = 0;
+					for x in t.x..=x_max+1 {
+						if perimeter.contains(&TilePos { x, y: t.y }) && perimeter.contains(&TilePos { x, y: t.y+1 }) && perimeter.contains(&TilePos { x, y: t.y-1 }) {
+							n += 1;
+						}
+					}
+					n % 2 == 1
+				}
 				let x_min = red_tiles[i].x.min(red_tiles[j].x);
 				let x_max = red_tiles[i].x.max(red_tiles[j].x);
 				let y_min = red_tiles[i].y.min(red_tiles[j].y);
 				let y_max = red_tiles[i].y.max(red_tiles[j].y);
 				let mut is_ok = true;
-				'outer: for x in x_min..=x_max {
+				/*if is_ok*/ {
+					let x = x_min;
 					for y in y_min..=y_max {
-						if !red_or_green_tiles.contains(&TilePos { x, y }) {
+						let tile_pos = TilePos { x, y };
+						if !is_on_perimeter(&tile_pos, &red_or_green_tiles) && !is_inside_perimeter(tile_pos, effective_x_max[y as usize], &red_or_green_tiles) {
 							is_ok = false;
-							break 'outer;
+							break
+						}
+					}
+				}
+				if is_ok {
+					let x = x_max;
+					for y in y_min..=y_max {
+						let tile_pos = TilePos { x, y };
+						if !is_on_perimeter(&tile_pos, &red_or_green_tiles) && !is_inside_perimeter(tile_pos, effective_x_max[y as usize], &red_or_green_tiles) {
+							is_ok = false;
+							break
+						}
+					}
+				}
+				if is_ok {
+					let y = y_min;
+					for x in x_min..=x_max {
+						let tile_pos = TilePos { x, y };
+						if !is_on_perimeter(&tile_pos, &red_or_green_tiles) && !is_inside_perimeter(tile_pos, effective_x_max[y as usize], &red_or_green_tiles) {
+							is_ok = false;
+							break
+						}
+					}
+				}
+				if is_ok {
+					let y = y_max;
+					for x in x_min..=x_max {
+						let tile_pos = TilePos { x, y };
+						if !is_on_perimeter(&tile_pos, &red_or_green_tiles) && !is_inside_perimeter(tile_pos, effective_x_max[y as usize], &red_or_green_tiles) {
+							is_ok = false;
+							break
 						}
 					}
 				}
@@ -93,15 +154,15 @@ fn parse_input(input: &str) -> Vec<TilePos> {
 	}).collect()
 }
 
-#[derive(Hash, PartialEq, Eq)]
+#[derive(Hash, Clone, Copy, PartialEq, Eq)]
 struct TilePos {
-	x: i32,
-	y: i32,
+	x: u32,
+	y: u32,
 }
 impl TilePos {
 	fn area_with(&self, other: &Self) -> u64 {
-		let w = (self.x - other.x + 1).unsigned_abs() as u64;
-		let h = (self.y - other.y + 1).unsigned_abs() as u64;
+		let w = (self.x + 1).abs_diff(other.x) as u64;
+		let h = (self.y + 1).abs_diff(other.y) as u64;
 		w * h
 	}
 }
