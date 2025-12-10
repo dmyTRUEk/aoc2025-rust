@@ -36,8 +36,10 @@ fn solve_text(text: &str) -> u64 {
 
 
 
-fn parse_input(input: &str) -> (/*TODO*/) {
-	todo!()
+fn parse_input(input: &str) -> Vec<(/*TODO*/)> {
+	input.lines().map(|line| {
+		todo!()
+	}).collect()
 }
 
 
