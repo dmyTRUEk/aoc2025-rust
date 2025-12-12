@@ -10,7 +10,7 @@
 	unused_results,
 )]
 
-use std::{fmt::Display, fs::read_to_string as read_file_to_string};
+use std::{collections::HashSet, fmt::Display, fs::read_to_string as read_file_to_string};
 
 // use itertools::Itertools;
 use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
@@ -20,8 +20,7 @@ use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterato
 
 
 fn main() {
-	// let solution = solve_file("./input/day12.input");
-	let solution = solve_file("./input/day12.example");
+	let solution = solve_file("./input/day12.input");
 	println!("{solution}");
 }
 
@@ -47,20 +46,25 @@ fn solve_text(text: &str) -> u64 {
 		area: Vec<bool>,
 		shapes: &[Shape; 6],
 		depth: u32,
+		checked_states: &mut HashSet<(Region, Vec<bool>)>,
 	) -> bool {
 		fn yx_to_index(y: u8, x: u8, w: u8) -> usize { ( (x as u16) + (w as u16)*(y as u16) ) as usize }
-		println!("depth: {depth}, region.nums = {:?}", region.nums);
+		if checked_states.contains(&(region, area.clone())) {
+			return false
+		}
+		// println!("depth: {depth}, region.nums = {:?}", region.nums);
 		if region.nums == [0; 6] { return true }
 		for (shape_i, num) in region.nums.iter().enumerate() {
 			if *num > 0 {
-				let shape = &shapes[shape_i];
-				for shape in shape.ats.iter() {
-					for y in 0..region.h-2 {
-						// let y = y as usize;
-						for x in 0..region.w-2 {
-							// let x = x as usize;
+				// println!("shape:\n{shape}");
+				for y in 0..region.h-2 {
+					// let y = y as usize;
+					for x in 0..region.w-2 {
+						// println!("y={y}, x={x}");
+						// let x = x as usize;
+						'mark:
+						for shape in shapes[shape_i].ats.iter() {
 							let mut area = area.clone();
-							let mut is_ok = true;
 							//
 							for dy in 0..3_u8 {
 								for dx in 0..3_u8 {
@@ -69,32 +73,38 @@ fn solve_text(text: &str) -> u64 {
 										if !area[i] {
 											area[i] = true;
 										} else {
-											// continue
-											is_ok = false;
+											continue 'mark
 										}
 									}
 								}
 							}
-							if !is_ok { continue }
 							//
 							let mut region = region;
 							region.nums[shape_i] -= 1;
-							let r = try_fill(region, area, shapes, depth+1);
-							if r { return true }
+							let r = try_fill(region, area.clone(), shapes, depth+1, checked_states);
+							if r { return true } else {
+								// let _r = checked_states.insert((region, area));
+								// assert!(!r);
+							}
 						}
 					}
 				}
 			}
 		}
+		let _r = checked_states.insert((region, area));
+		// assert!(!r);
 		false
 	}
 
 	regions
-		.into_iter()
-		// .into_par_iter()
-		.map(|region| {
+		// .into_iter()
+		.into_par_iter()
+		.enumerate()
+		.map(|(i, region)| {
 			let area = vec![false; region.w as usize * region.h as usize];
-			try_fill(region, area, &shapes, 0)
+			let r = try_fill(region, area, &shapes, 0, &mut HashSet::new());
+			println!("regions[{i}]: {r}");
+			r
 		})
 		.filter(|is_ok| *is_ok)
 		.count()
@@ -140,7 +150,7 @@ impl Display for ShapeExact {
 		let at = self.at;
 		writeln!(f, "{}{}{}", char(at[0][0]), char(at[0][1]), char(at[0][2])).unwrap();
 		writeln!(f, "{}{}{}", char(at[1][0]), char(at[1][1]), char(at[1][2])).unwrap();
-		writeln!(f, "{}{}{}", char(at[2][0]), char(at[0][1]), char(at[2][2])).unwrap();
+		write!  (f, "{}{}{}", char(at[2][0]), char(at[0][1]), char(at[2][2])).unwrap();
 		Ok(())
 	}
 }
@@ -231,7 +241,7 @@ fn flip_w(ShapeExact { at: at_old }: ShapeExact) -> ShapeExact {
 
 
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Region {
 	w: u8,
 	h: u8,
