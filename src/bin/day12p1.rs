@@ -44,68 +44,39 @@ fn solve_text(text: &str) -> u64 {
 
 	fn try_fill(
 		region: Region,
-		area: Vec<Vec<bool>>, // TODO(optim): flat array. or use nalgebra?
+		area: Vec<bool>,
 		shapes: &[Shape; 6],
 		depth: u32,
 	) -> bool {
-		// println!("depth: {depth}, region.nums = {:?}", region.nums);
+		fn yx_to_index(y: u8, x: u8, w: u8) -> usize { ( (x as u16) + (w as u16)*(y as u16) ) as usize }
+		println!("depth: {depth}, region.nums = {:?}", region.nums);
 		if region.nums == [0; 6] { return true }
 		for (shape_i, num) in region.nums.iter().enumerate() {
 			if *num > 0 {
 				let shape = &shapes[shape_i];
 				for shape in shape.ats.iter() {
 					for y in 0..region.h-2 {
-						let y = y as usize;
+						// let y = y as usize;
 						for x in 0..region.w-2 {
-							let x = x as usize;
+							// let x = x as usize;
 							let mut area = area.clone();
-							if shape .at[0][0] {
-								if !area[y][x] {
-									area[y][x] = true;
-								} else { continue }
-							}
-							if shape .at[0][0+1] {
-								if !area[y][x+1] {
-									area[y][x+1] = true;
-								} else { continue }
-							}
-							if shape .at[0][0+2] {
-								if !area[y][x+2] {
-									area[y][x+2] = true;
-								} else { continue }
-							}
+							let mut is_ok = true;
 							//
-							if shape .at[0+1][0] {
-								if !area[y+1][x] {
-									area[y+1][x] = true;
-								} else { continue }
+							for dy in 0..3_u8 {
+								for dx in 0..3_u8 {
+									if shape.at[dy as usize][dx as usize] {
+										let i = yx_to_index(y+dy, x+dx, region.w);
+										if !area[i] {
+											area[i] = true;
+										} else {
+											// continue
+											is_ok = false;
+										}
+									}
+								}
 							}
-							if shape .at[0+1][0+1] {
-								if !area[y+1][x+1] {
-									area[y+1][x+1] = true;
-								} else { continue }
-							}
-							if shape .at[0+1][0+2] {
-								if !area[y+1][x+2] {
-									area[y+1][x+2] = true;
-								} else { continue }
-							}
+							if !is_ok { continue }
 							//
-							if shape .at[0+2][0] {
-								if !area[y+2][x] {
-									area[y+2][x] = true;
-								} else { continue }
-							}
-							if shape .at[0+2][0+1] {
-								if !area[y+2][x+1] {
-									area[y+2][x+1] = true;
-								} else { continue }
-							}
-							if shape .at[0+2][0+2] {
-								if !area[y+2][x+2] {
-									area[y+2][x+2] = true;
-								} else { continue }
-							}
 							let mut region = region;
 							region.nums[shape_i] -= 1;
 							let r = try_fill(region, area, shapes, depth+1);
@@ -119,10 +90,10 @@ fn solve_text(text: &str) -> u64 {
 	}
 
 	regions
-		// .into_iter()
-		.into_par_iter()
+		.into_iter()
+		// .into_par_iter()
 		.map(|region| {
-			let area = vec![vec![false; region.w as usize]; region.h as usize];
+			let area = vec![false; region.w as usize * region.h as usize];
 			try_fill(region, area, &shapes, 0)
 		})
 		.filter(|is_ok| *is_ok)
