@@ -101,6 +101,7 @@ fn solve_text(text: &str) -> u64 {
 		.into_par_iter()
 		.enumerate()
 		.map(|(i, region)| {
+			if !region.is_maybe_possible(&shapes) { return false }
 			let area = vec![false; region.w as usize * region.h as usize];
 			let r = try_fill(region, area, &shapes, 0, &mut HashSet::new());
 			println!("regions[{i}]: {r}");
@@ -143,6 +144,17 @@ impl ShapeExact {
 			}).collect::<Vec<[bool; 3]>>().try_into().unwrap();
 		Self { at }
 	}
+	fn area(&self) -> u8 {
+		self.at[0][0] as u8 +
+		self.at[0][1] as u8 +
+		self.at[0][2] as u8 +
+		self.at[1][0] as u8 +
+		self.at[1][1] as u8 +
+		self.at[1][2] as u8 +
+		self.at[2][0] as u8 +
+		self.at[2][1] as u8 +
+		self.at[2][2] as u8
+	}
 }
 impl Display for ShapeExact {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -177,6 +189,9 @@ impl Shape {
 		ats.sort();
 		ats.dedup();
 		Self { ats }
+	}
+	fn area(&self) -> u8 {
+		self.ats[0].area()
 	}
 }
 impl Display for Shape {
@@ -258,6 +273,14 @@ impl Region {
 			.collect();
 		let nums = nums.try_into().unwrap();
 		Region { w, h, nums }
+	}
+	fn is_maybe_possible(&self, shapes: &[Shape]) -> bool {
+		let region_area = (self.w as u16) * (self.h as u16);
+		assert_eq!(self.nums.len(), shapes.len());
+		let total_shapes_area = shapes.iter().zip(self.nums)
+			.map(|(shape, n)| (n as u16) * (shape.area() as u16))
+			.sum();
+		region_area >= total_shapes_area
 	}
 }
 
